@@ -42,6 +42,7 @@ jobs:
         run: pyinstaller --clean ibkr-ir.spec
 
       - name: Smoke test
+        shell: bash
         run: |
           "${{ matrix.binary }}" --year 2025 --statement examples/sample_statement.csv
           test -f output/irpf-2025.html
