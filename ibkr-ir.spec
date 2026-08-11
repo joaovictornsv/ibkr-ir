@@ -7,7 +7,7 @@ a = Analysis(
     ["generate.py"],
     pathex=["."],
     binaries=[],
-    datas=[],
+    datas=[("docs/guia-ibkr-ir.html", "docs")],
     hiddenimports=[
         "src",
         "src.calculator",
@@ -16,6 +16,7 @@ a = Analysis(
         "src.prices",
         "src.ptax",
         "src.report",
+        "src.report_styles",
     ],
     hookspath=[],
     hooksconfig={},

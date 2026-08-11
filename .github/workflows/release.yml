@@ -51,12 +51,15 @@ jobs:
         run: |
           mkdir -p release
           cp "${{ matrix.binary }}" "release/${{ matrix.artifact_name }}"
+          cp docs/guia-ibkr-ir.html "release/guia-ibkr-ir.html"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: release/${{ matrix.artifact_name }}
+          path: |
+            release/${{ matrix.artifact_name }}
+            release/guia-ibkr-ir.html
 
   release:
     name: Publish GitHub Release

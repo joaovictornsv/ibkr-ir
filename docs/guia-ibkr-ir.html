@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guia — IBKR para IRPF (ibkr-ir)</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --text: #1a2332;
+      --muted: #5c6578;
+      --accent: #2563eb;
+      --border: #e2e8f0;
+      --warn: #b45309;
+      --warn-bg: #fef3c7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    h1, h2, h3 { line-height: 1.2; }
+    h1 { font-size: 1.9rem; margin-bottom: 0.25rem; }
+    .subtitle { color: var(--muted); margin-bottom: 2rem; }
+    section {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    }
+    ol, ul { padding-left: 1.25rem; }
+    .disclaimer {
+      border-left: 4px solid var(--warn);
+      color: var(--muted);
+      background: var(--warn-bg);
+      border-radius: 0 8px 8px 0;
+      padding: 0.75rem 1rem;
+    }
+    code {
+      background: #f1f5f9;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      font-size: 0.9em;
+    }
+    .guide-note {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      margin: 1rem 0;
+      color: #1e3a5f;
+    }
+    .guide-note strong { color: #1e40af; }
+    h4 { margin: 1.25rem 0 0.5rem; font-size: 1rem; }
+    h4:first-child { margin-top: 0; }
+    .term-list { margin: 0.5rem 0 1rem; }
+    .term-list dt { font-weight: 600; margin-top: 0.65rem; }
+    .term-list dt:first-child { margin-top: 0; }
+    .term-list dd { margin: 0.2rem 0 0 0; color: var(--muted); }
+    .steps { margin: 0.75rem 0; padding-left: 0; list-style: none; }
+    .steps li {
+      position: relative;
+      padding: 0.65rem 0 0.65rem 2.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .steps li:last-child { border-bottom: none; }
+    .steps li::before {
+      content: attr(data-step);
+      position: absolute;
+      left: 0;
+      top: 0.65rem;
+      width: 1.75rem;
+      height: 1.75rem;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.75rem;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Guia de uso — IBKR para IRPF</h1>
+  <p class="subtitle">Leia este guia <strong>antes</strong> de rodar o programa pela primeira vez.
+  Depois de gerar o relatório, abra o arquivo <code>irpf-ANO.html</code> para copiar os valores
+  para a declaração.</p>
+
+  <section class="disclaimer">
+    <p><strong>Aviso:</strong> este material é apenas informativo e não constitui assessoria fiscal.
+    Regras mudam; valores parciais do ano são provisórios. Confira tudo com um contador.</p>
+  </section>
+
+  <section>
+    <h2>1. Como rodar o programa</h2>
+    <p>O programa lê o extrato CSV da IBKR e gera um relatório HTML com os valores para o IRPF.</p>
+
+    <h4>Com o executável (sem instalar Python)</h4>
+    <p>Baixe o arquivo para o seu sistema em
+    <a href="https://github.com/joaovictornsv/ibkr-ir/releases">Releases</a>
+    e execute no terminal (ajuste o ano e o caminho do CSV):</p>
+    <ul>
+      <li><strong>Windows:</strong> <code>ibkr-ir.exe --year 2025 --statement C:\caminho\extrato.csv</code></li>
+      <li><strong>macOS / Linux:</strong> <code>./ibkr-ir --year 2025 --statement ~/Downloads/extrato.csv</code></li>
+    </ul>
+
+    <h4>Com Python (desenvolvedores)</h4>
+    <pre style="background:#f1f5f9;padding:1rem;border-radius:8px;overflow:auto"><code>python generate.py --year 2025 --statement /caminho/para/extrato.csv</code></pre>
+
+    <p>O relatório será salvo em <code>output/irpf-2025.html</code> (substitua o ano).
+    Um arquivo JSON é gerado junto para facilitar a declaração do ano seguinte.</p>
+
+    <div class="guide-note">
+      <strong>Internet na primeira execução:</strong> o programa busca as taxas PTAX no site do
+      Banco Central e guarda em <code>cache/ptax</code> no seu computador.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Como exportar o Activity Statement na IBKR</h2>
+    <p>O <strong>Activity Statement</strong> (extrato de atividades) é o relatório oficial da IBKR
+    que lista tudo o que aconteceu na sua conta: compras e vendas, dividendos, saldo em caixa,
+    posições abertas e taxas. É o <strong>único arquivo</strong> que este programa aceita.</p>
+
+    <div class="guide-note">
+      <strong>Não use o arquivo "Transactions".</strong> A IBKR também oferece exportação de
+      transações em CSV, mas esse formato é diferente e <em>não funciona</em> com este programa.
+      Procure especificamente o <strong>Activity Statement</strong>.
+    </div>
+
+    <div class="guide-note">
+      <strong>Período parcial:</strong> se você exportar o extrato antes de 31 de dezembro
+      (por exemplo, para uma prévia durante o ano), os valores no relatório serão
+      <strong>provisórios</strong>. Para o IRPF final, exporte novamente com o período completo
+      (1º de janeiro a 31 de dezembro do ano declarado). O relatório gerado avisará quando
+      detectar um período parcial.
+    </div>
+
+    <h4>Passo a passo no Client Portal (site da IBKR)</h4>
+    <ol class="steps">
+      <li data-step="1">Acesse <strong>interactivebrokers.com</strong> e faça login no
+        <strong>Client Portal</strong> (portal do cliente).</li>
+      <li data-step="2">No menu, vá em <strong>Performance &amp; Reports</strong>
+        (Desempenho e Relatórios).</li>
+      <li data-step="3">Clique em <strong>Statements</strong> (Extratos) e escolha o tipo
+        <strong>Activity</strong> (Atividade).</li>
+      <li data-step="4">Selecione sua conta (o número começa com <code>U</code>, por exemplo
+        <code>U12345678</code>).</li>
+      <li data-step="5">Em <strong>Period</strong> (Período), selecione
+        <strong>Custom</strong> (Personalizado) e defina o ano civil completo:
+        <strong>1º de janeiro</strong> até <strong>31 de dezembro</strong> do ano que você
+        vai declarar. Para uma prévia durante o ano, use a data de hoje como fim — mas reexporte
+        em janeiro com o ano completo para o IRPF final.</li>
+      <li data-step="6">Em <strong>Format</strong> (Formato), escolha <strong>CSV</strong>.
+        Não escolha PDF — o PDF não pode ser lido por este programa.</li>
+      <li data-step="7">Clique em <strong>Run</strong> (Executar), aguarde o relatório ser
+        gerado e clique em <strong>Download</strong> (Baixar).</li>
+      <li data-step="8">Salve o arquivo no seu computador. Ele contém dados pessoais — não
+        compartilhe publicamente nem envie para repositórios Git.</li>
+    </ol>
+
+    <h4>Alternativa: Trader Workstation (TWS)</h4>
+    <p>Se você usa o programa TWS instalado: menu <strong>Account</strong> →
+    <strong>Reports</strong> → <strong>Activity</strong>. Configure o mesmo período e formato CSV.</p>
+
+    <h4>Quando exportar?</h4>
+    <dl class="term-list">
+      <dt>Prévia (a qualquer momento)</dt>
+      <dd>Útil para estimar quanto declarar antes do prazo. Os valores ainda podem mudar se você
+      comprar ou vender mais ações até 31/12.</dd>
+      <dt>Declaração final (recomendado: janeiro do ano seguinte)</dt>
+      <dd>Após 31 de dezembro, exporte o extrato com o ano civil completo. Esses são os valores
+      oficiais para o IRPF.</dd>
+    </dl>
+
+    <h4>Seções que o CSV deve conter</h4>
+    <p>O extrato padrão da IBKR já inclui as seções necessárias. Se você personaliza o relatório,
+    confirme que estas aparecem no arquivo:</p>
+    <ul>
+      <li><strong>Open Positions</strong> — ações que você ainda tem na carteira</li>
+      <li><strong>Trades</strong> — compras e vendas realizadas</li>
+      <li><strong>Dividends</strong> — dividendos recebidos</li>
+      <li><strong>Withholding Tax</strong> — imposto retido na fonte sobre dividendos</li>
+      <li><strong>Cash Report</strong> — movimentação e saldo de caixa</li>
+      <li><strong>Net Asset Value</strong> — valor total da conta</li>
+      <li><strong>Deposits &amp; Withdrawals</strong> — depósitos e saques (remessas)</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. Como obter os valores para o IRPF</h2>
+    <p>O programa lê o extrato da IBKR e busca as taxas de câmbio (PTAX) automaticamente.
+    Você não precisa calcular nada manualmente — o relatório HTML traz os números prontos para
+    copiar na declaração.</p>
+
+    <h4>Termos importantes</h4>
+    <dl class="term-list">
+      <dt>IRPF</dt>
+      <dd>Imposto de Renda da Pessoa Física — a declaração anual que moradores no Brasil
+      enviam à Receita Federal, normalmente entre março e maio.</dd>
+
+      <dt>Bens e Direitos</dt>
+      <dd>Seção da declaração onde você lista o que possui: imóveis, carros, investimentos.
+      Ações na IBKR entram no <strong>Grupo 04</strong> (participações societárias) com
+      <strong>Código 03</strong> (ações, inclusive as negociadas em bolsa).</dd>
+
+      <dt>PTAX</dt>
+      <dd>Taxa de câmbio oficial do dólar publicada diariamente pelo Banco Central do Brasil.
+      Para converter valores em dólar para reais no IRPF, usa-se a PTAX de venda do dia
+      relevante (pagamento do dividendo, data da venda, ou 31/12 para posições em carteira).
+      Este programa busca a PTAX automaticamente no site do BCB.</dd>
+
+      <dt>Open Positions (posições abertas)</dt>
+      <dd>Seção do extrato IBKR que mostra as ações que você <strong>ainda tem</strong> na
+      última data do período. Colunas importantes: <em>Symbol</em> (ticker), <em>Quantity</em>
+      (quantidade), <em>Close Price</em> (preço de fechamento) e <em>Value</em> (valor total
+      em dólar = quantidade × preço).</dd>
+
+      <dt>Cash Report (relatório de caixa)</dt>
+      <dd>Seção do extrato que mostra o <strong>saldo em dinheiro</strong> na conta (não
+      investido em ações). A linha <em>Ending Cash</em> em USD é o saldo em dólares.</dd>
+
+      <dt>Rendimentos Isentos — Código 05</dt>
+      <dd>Seção do IRPF para rendimentos que não pagam imposto no Brasil, como dividendos
+      recebidos de empresas no exterior. O valor é o dividendo bruto convertido para reais
+      com a PTAX da data do pagamento.</dd>
+
+      <dt>Ganho de capital</dt>
+      <dd>Lucro (ou prejuízo) quando você <strong>vende</strong> uma ação por um preço maior
+      (ou menor) que o custo de aquisição. No Brasil, pessoa física usa o método de
+      <strong>custo médio</strong> para calcular — este programa faz esse cálculo em reais,
+      não usa o FIFO da IBKR.</dd>
+    </dl>
+
+    <h4>Como cada valor é calculado</h4>
+    <dl class="term-list">
+      <dt>Valor atual (31/12 ou data do extrato)</dt>
+      <dd>Para cada ação em carteira: valor em USD do extrato (Open Positions) multiplicado
+      pela PTAX da data de valoração. Para o caixa em USD: saldo do extrato × mesma PTAX.
+      Se o extrato cobre só parte do ano, usa-se a PTAX da última data do período — o relatório
+      indicará isso.</dd>
+
+      <dt>Valor em 31/12 do ano anterior</dt>
+      <dd>É o que você declarou como valor da posição no IRPF do ano passado. Na ficha de
+      Bens e Direitos há duas colunas de valor: a do ano atual e a do ano anterior.</dd>
+
+      <dt>Dividendos</dt>
+      <dd>Lidos da seção <em>Dividends</em> do extrato. Cada pagamento é convertido com a
+      PTAX da data em que o dividendo foi creditado na conta.</dd>
+
+      <dt>Vendas e ganho de capital</dt>
+      <dd>Lidas da seção <em>Trades</em>. Para cada venda, o programa calcula o custo médio
+      em reais (considerando todas as compras anteriores) e o ganho ou prejuízo em reais.</dd>
+    </dl>
+
+    <div class="guide-note">
+      <strong>Primeiro ano na IBKR:</strong> se você abriu a conta no ano que está declarando,
+      a coluna &ldquo;valor em 31/12 do ano anterior&rdquo; no IRPF deve ser
+      <strong>R$ 0,00</strong> para todos os ativos. O relatório gerado confirma isso quando
+      o extrato mostra <em>Prior Total = 0</em> no NAV.
+    </div>
+
+    <div class="guide-note">
+      <strong>Anos seguintes:</strong> se você rodou o programa no ano passado, os valores
+      anteriores são carregados automaticamente do arquivo <code>irpf-ANO.json</code> gerado
+      na pasta <code>output/</code>. Se esse arquivo não existir, o relatório avisará e você
+      pode usar <code>--prior-statement</code> ou <code>--prior-year-json</code>.
+    </div>
+
+    <h4>O que você precisa fazer manualmente?</h4>
+    <ul>
+      <li><strong>Exportar o extrato</strong> da IBKR — o programa não acessa sua conta
+      automaticamente.</li>
+      <li><strong>Copiar os valores</strong> do relatório HTML para o programa da Receita Federal
+      (Receita Web ou app Meu Imposto de Renda).</li>
+      <li><strong>Conferir</strong> se os números fazem sentido antes de enviar a declaração.
+      Em caso de dúvida, consulte um contador.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

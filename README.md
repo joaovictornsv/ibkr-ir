@@ -16,8 +16,9 @@ If you only want to generate your IRPF guide and do not want to install Python:
    - **Windows:** `ibkr-ir-windows-x86_64` → rename to `ibkr-ir.exe` (optional)
    - **macOS (Apple Silicon):** `ibkr-ir-macos-arm64`
    - **Linux:** `ibkr-ir-linux-x86_64`
-2. Export your IBKR **Activity Statement** as CSV (see [Exporting the statement](#exporting-the-statement)).
-3. Open a terminal in the folder where you saved the file and run (adjust paths):
+2. **Read the usage guide first:** open [`docs/guia-ibkr-ir.html`](docs/guia-ibkr-ir.html) in your browser (also in the repo and copied to `output/` when you run the program).
+3. Export your IBKR **Activity Statement** as CSV (see [Exporting the statement](#exporting-the-statement)).
+4. Open a terminal in the folder where you saved the file and run (adjust paths):
 
 **Windows (PowerShell or CMD)**
 
@@ -88,7 +89,7 @@ Use the IBKR **Activity Statement** — not the Transactions export.
 4. **Format:** CSV (not PDF)
 5. Download the file
 
-Detailed step-by-step instructions (in Portuguese) are also included in the generated HTML report.
+Detailed step-by-step instructions (in Portuguese) are in [`docs/guia-ibkr-ir.html`](docs/guia-ibkr-ir.html) — read that before your first run.
 
 ## Usage
 
@@ -164,7 +165,7 @@ Both paths are **gitignored** by default — they may contain personal data.
 - **Ganho de capital** — average cost in BRL, per sale
 - **DARF check** — monthly R$ 35,000 sale-proceeds threshold
 - **CBE check** — USD 100k NAV / remittance threshold (informative)
-- Export guide and glossary for non-experts
+- Export guide and glossary for non-experts (see `docs/guia-ibkr-ir.html`)
 
 ## Privacy
 

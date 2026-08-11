@@ -118,14 +118,15 @@ Step-by-step (Portuguese in generated HTML):
 
 ## HTML report structure
 
-1. Capa + general disclaimer
-2. Como exportar o Activity Statement na IBKR
-3. Como obter valores (automático vs manual)
-4. Passo a passo IRPF (copy buttons)
-5. Audit tables (USD, PTAX, BRL)
-6. Ganho de capital worksheet
-7. **Obrigações relacionadas: DARF, GCAP e CBE**
-8. JSON sidecar note (next-year carry-forward)
+1. Capa + link para o guia de uso (`docs/guia-ibkr-ir.html`)
+2. Avisos dinâmicos (período parcial, primeiro ano na IBKR, valores do ano anterior)
+3. Passo a passo IRPF (copy buttons)
+4. Audit tables (USD, PTAX, BRL)
+5. Ganho de capital worksheet
+6. **Obrigações relacionadas: DARF, GCAP e CBE**
+7. JSON sidecar note (next-year carry-forward)
+
+Static usage instructions (export guide, glossary, how to run) live in **`docs/guia-ibkr-ir.html`** so users can read them before the first run.
 
 ---
 

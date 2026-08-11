@@ -3,11 +3,22 @@
 from __future__ import annotations
 
 import html
+import shutil
+import sys
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
 from .calculator import CbeCheck, IrpfReport
+from .report_styles import REPORT_CSS
+
+GUIDE_FILENAME = "guia-ibkr-ir.html"
+
+
+def guide_source_path() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys._MEIPASS) / "docs" / GUIDE_FILENAME
+    return Path(__file__).resolve().parent.parent / "docs" / GUIDE_FILENAME
 
 
 def _fmt_brl(value: Decimal) -> str:
@@ -26,102 +37,24 @@ def _copy_button(text: str, button_id: str) -> str:
     )
 
 
-def _section_export_guide(report: IrpfReport, partial_year_note: str) -> str:
+def _prior_year_note(report: IrpfReport) -> str:
     year = report.year
-    return f"""
-    <p>O <strong>Activity Statement</strong> (extrato de atividades) é o relatório oficial da IBKR
-    que lista tudo o que aconteceu na sua conta: compras e vendas, dividendos, saldo em caixa,
-    posições abertas e taxas. É o <strong>único arquivo</strong> que este programa aceita.</p>
-
-    <div class="guide-note">
-      <strong>Não use o arquivo "Transactions".</strong> A IBKR também oferece exportação de
-      transações em CSV, mas esse formato é diferente e <em>não funciona</em> com este programa.
-      Procure especificamente o <strong>Activity Statement</strong>.
-    </div>
-
-    {partial_year_note}
-
-    <h4>Passo a passo no Client Portal (site da IBKR)</h4>
-    <ol class="steps">
-      <li data-step="1">Acesse <strong>interactivebrokers.com</strong> e faça login no
-        <strong>Client Portal</strong> (portal do cliente).</li>
-      <li data-step="2">No menu, vá em <strong>Performance &amp; Reports</strong>
-        (Desempenho e Relatórios).</li>
-      <li data-step="3">Clique em <strong>Statements</strong> (Extratos) e escolha o tipo
-        <strong>Activity</strong> (Atividade).</li>
-      <li data-step="4">Selecione sua conta (o número começa com <code>U</code>, por exemplo
-        <code>U12345678</code>).</li>
-      <li data-step="5">Em <strong>Period</strong> (Período), selecione
-        <strong>Custom</strong> (Personalizado) e defina:
-        <strong>1º de janeiro de {year}</strong> até <strong>31 de dezembro de {year}</strong>.
-        Para uma prévia durante o ano, use a data de hoje como fim — mas reexporte em janeiro
-        com o ano completo para o IRPF final.</li>
-      <li data-step="6">Em <strong>Format</strong> (Formato), escolha <strong>CSV</strong>.
-        Não escolha PDF — o PDF não pode ser lido por este programa.</li>
-      <li data-step="7">Clique em <strong>Run</strong> (Executar), aguarde o relatório ser
-        gerado e clique em <strong>Download</strong> (Baixar).</li>
-      <li data-step="8">Salve o arquivo no seu computador. Ele contém dados pessoais — não
-        compartilhe publicamente nem envie para repositórios Git.</li>
-    </ol>
-
-    <h4>Alternativa: Trader Workstation (TWS)</h4>
-    <p>Se você usa o programa TWS instalado: menu <strong>Account</strong> →
-    <strong>Reports</strong> → <strong>Activity</strong>. Configure o mesmo período e formato CSV.</p>
-
-    <h4>Quando exportar?</h4>
-    <dl class="term-list">
-      <dt>Prévia (a qualquer momento)</dt>
-      <dd>Útil para estimar quanto declarar antes do prazo. Os valores ainda podem mudar se você
-      comprar ou vender mais ações até 31/12.</dd>
-      <dt>Declaração final (recomendado: janeiro do ano seguinte)</dt>
-      <dd>Após 31 de dezembro, exporte o extrato com o ano civil completo. Esses são os valores
-      oficiais que devem ir no IRPF de {year}.</dd>
-    </dl>
-
-    <h4>Seções que o CSV deve conter</h4>
-    <p>O extrato padrão da IBKR já inclui as seções necessárias. Se você personaliza o relatório,
-    confirme que estas aparecem no arquivo:</p>
-    <ul>
-      <li><strong>Open Positions</strong> — ações que você ainda tem na carteira</li>
-      <li><strong>Trades</strong> — compras e vendas realizadas</li>
-      <li><strong>Dividends</strong> — dividendos recebidos</li>
-      <li><strong>Withholding Tax</strong> — imposto retido na fonte sobre dividendos</li>
-      <li><strong>Cash Report</strong> — movimentação e saldo de caixa</li>
-      <li><strong>Net Asset Value</strong> — valor total da conta</li>
-      <li><strong>Deposits &amp; Withdrawals</strong> — depósitos e saques (remessas)</li>
-    </ul>
-    """
-
-
-def _section_values_guide(
-    report: IrpfReport, prior_help: str, is_partial_year: bool
-) -> str:
-    val_date = report.valuation_date.strftime("%d/%m/%Y")
-    year = report.year
-    valuation_label = (
-        f"data do extrato ({val_date})"
-        if is_partial_year
-        else f"31/12/{year}"
-    )
-
-    prior_block = ""
     if report.is_first_ibkr_year:
-        prior_block = """
+        return """
         <div class="guide-note">
           <strong>Primeiro ano na IBKR:</strong> como você abriu a conta neste ano, a coluna
           &ldquo;valor em 31/12 do ano anterior&rdquo; no IRPF deve ser <strong>R$ 0,00</strong>
           para todos os ativos. O extrato confirma isso quando o campo <em>Prior Total</em> no
           NAV é zero.
         </div>"""
-    elif report.prior_year_source == "json":
-        prior_block = """
+    if report.prior_year_source == "json":
+        return """
         <div class="guide-note">
           <strong>Valores do ano anterior:</strong> foram carregados automaticamente do arquivo
           JSON gerado na declaração do ano passado. Você não precisa buscar esses números
           manualmente.
         </div>"""
-    else:
-        prior_block = """
+    return """
         <div class="guide-note">
           <strong>Atenção — valores do ano anterior não encontrados.</strong> Para preencher a
           coluna &ldquo;valor em 31/12/{prev_year}&rdquo; no IRPF, você pode: (1) exportar o
@@ -131,83 +64,21 @@ def _section_values_guide(
           <code>--prior-year-json</code>.
         </div>""".format(prev_year=year - 1)
 
-    return f"""
-    <p>Esta seção explica <strong>de onde vêm os números</strong> que aparecem na seção 3
-    (passo a passo IRPF). Você não precisa calcular nada manualmente — o programa lê o extrato
-    da IBKR e busca as taxas de câmbio automaticamente.</p>
 
-    <h4>Termos importantes</h4>
-    <dl class="term-list">
-      <dt>IRPF</dt>
-      <dd>Imposto de Renda da Pessoa Física — a declaração anual que moradores no Brasil
-      enviam à Receita Federal, normalmente entre março e maio.</dd>
+def _section_situation_notes(report: IrpfReport) -> str:
+    is_partial_year = report.valuation_date != date(report.year, 12, 31)
+    notes: list[str] = []
 
-      <dt>Bens e Direitos</dt>
-      <dd>Seção da declaração onde você lista o que possui: imóveis, carros, investimentos.
-      Ações na IBKR entram no <strong>Grupo 04</strong> (participações societárias) com
-      <strong>Código 03</strong> (ações, inclusive as negociadas em bolsa).</dd>
+    if is_partial_year:
+        notes.append(
+            f"<div class=\"guide-note\"><strong>Período parcial:</strong> este extrato cobre até "
+            f"{report.valuation_date.strftime('%d/%m/%Y')}, não o ano completo. Os valores são "
+            f"<strong>provisórios</strong> — para o IRPF final, exporte novamente com período de "
+            f"1º de janeiro a 31 de dezembro de {report.year}.</div>"
+        )
 
-      <dt>PTAX</dt>
-      <dd>Taxa de câmbio oficial do dólar publicada diariamente pelo Banco Central do Brasil.
-      Para converter valores em dólar para reais no IRPF, usa-se a PTAX de venda do dia
-      relevante (pagamento do dividendo, data da venda, ou 31/12 para posições em carteira).
-      Este programa busca a PTAX automaticamente no site do BCB.</dd>
-
-      <dt>Open Positions (posições abertas)</dt>
-      <dd>Seção do extrato IBKR que mostra as ações que você <strong>ainda tem</strong> na
-      última data do período. Colunas importantes: <em>Symbol</em> (ticker), <em>Quantity</em>
-      (quantidade), <em>Close Price</em> (preço de fechamento) e <em>Value</em> (valor total
-      em dólar = quantidade × preço).</dd>
-
-      <dt>Cash Report (relatório de caixa)</dt>
-      <dd>Seção do extrato que mostra o <strong>saldo em dinheiro</strong> na conta (não
-      investido em ações). A linha <em>Ending Cash</em> em USD é o saldo em dólares.</dd>
-
-      <dt>Rendimentos Isentos — Código 05</dt>
-      <dd>Seção do IRPF para rendimentos que não pagam imposto no Brasil, como dividendos
-      recebidos de empresas no exterior. O valor é o dividendo bruto convertido para reais
-      com a PTAX da data do pagamento.</dd>
-
-      <dt>Ganho de capital</dt>
-      <dd>Lucro (ou prejuízo) quando você <strong>vende</strong> uma ação por um preço maior
-      (ou menor) que o custo de aquisição. No Brasil, pessoa física usa o método de
-      <strong>custo médio</strong> para calcular — este programa faz esse cálculo em reais,
-      não usa o FIFO da IBKR.</dd>
-    </dl>
-
-    <h4>Como cada valor é calculado neste relatório</h4>
-    <dl class="term-list">
-      <dt>Valor atual ({valuation_label})</dt>
-      <dd>Para cada ação em carteira: valor em USD do extrato (Open Positions) multiplicado
-      pela PTAX de {val_date}. Para o caixa em USD: saldo do extrato × mesma PTAX.
-      Os preços de mercado vêm do próprio extrato — não usamos sites de cotação externos.</dd>
-
-      <dt>Valor em 31/12 do ano anterior</dt>
-      <dd>É o que você declarou como valor da posição no IRPF do ano passado. Na ficha de
-      Bens e Direitos há duas colunas de valor: a do ano atual e a do ano anterior.
-      {prior_help}</dd>
-
-      <dt>Dividendos</dt>
-      <dd>Lidos da seção <em>Dividends</em> do extrato. Cada pagamento é convertido com a
-      PTAX da data em que o dividendo foi creditado na conta.</dd>
-
-      <dt>Vendas e ganho de capital</dt>
-      <dd>Lidas da seção <em>Trades</em>. Para cada venda, o programa calcula o custo médio
-      em reais (considerando todas as compras anteriores) e o ganho ou prejuízo em reais.</dd>
-    </dl>
-
-    {prior_block}
-
-    <h4>O que você precisa fazer manualmente?</h4>
-    <ul>
-      <li><strong>Exportar o extrato</strong> da IBKR (seção 1) — o programa não acessa sua
-      conta automaticamente.</li>
-      <li><strong>Copiar os valores</strong> da seção 3 para o programa da Receita Federal
-      (Receita Web ou app Meu Imposto de Renda).</li>
-      <li><strong>Conferir</strong> se os números fazem sentido antes de enviar a declaração.
-      Em caso de dúvida, consulte um contador.</li>
-    </ul>
-  """
+    notes.append(_prior_year_note(report))
+    return "\n".join(notes)
 
 
 def _section_obligations_guide(
@@ -232,7 +103,7 @@ def _section_obligations_guide(
       <strong>mensal</strong> quando você vende ações com lucro.</p>
       <p><strong>Quando pode ser necessário:</strong> se no mesmo mês civil você vende ações
       com lucro <strong>e</strong> o total vendido (em reais) ultrapassa
-      <strong>R$ 35.000</strong>. Veja a seção 5 deste relatório para a verificação mês a mês.</p>
+      <strong>R$ 35.000</strong>. Veja a seção 3 deste relatório para a verificação mês a mês.</p>
       <p><strong>O que este relatório faz:</strong> calcula o total de vendas por mês em reais
       e indica &ldquo;Precisa DARF? Sim/Não&rdquo;.</p>
       <p><strong>O que este relatório <em>não</em> faz:</strong> emitir a DARF, calcular o
@@ -248,7 +119,7 @@ def _section_obligations_guide(
       <p><strong>Quando pode ser necessário:</strong> quando há vendas com ganho de capital
       tributável no mês — geralmente junto com a DARF do mesmo mês.</p>
       <p><strong>O que este relatório faz:</strong> lista cada venda com proventos, custo e
-      ganho em reais (seção 3), que servem como base para preencher o GCAP.</p>
+      ganho em reais (seção 1), que servem como base para preencher o GCAP.</p>
       <p><strong>O que este relatório <em>não</em> faz:</strong> preencher ou transmitir o
       GCAP. Você deve usar o programa GCAP disponível no site da Receita Federal.</p>
     </div>
@@ -309,18 +180,13 @@ def _section_json_guide(report: IrpfReport) -> str:
       <li data-step="1">Em janeiro de {next_year}, exporte o Activity Statement de {year}
         completo (1º de janeiro a 31 de dezembro de {year}).</li>
       <li data-step="2">Rode o programa normalmente:
-        <code>python generate.py --year {next_year} --statement extrato.csv</code></li>
+        <code>ibkr-ir --year {next_year} --statement extrato.csv</code></li>
       <li data-step="3">O programa encontra <code>output/irpf-{year}.json</code>
         automaticamente e usa os valores salvos como &ldquo;ano anterior&rdquo;.</li>
       <li data-step="4">Se o JSON não existir, use
         <code>--prior-year-json output/irpf-{year}.json</code> para indicar o caminho
         manualmente.</li>
     </ol>
-
-    <h4>Primeiro ano na IBKR?</h4>
-    <p>Se {year} foi seu primeiro ano na corretora, todos os valores anteriores são
-    <strong>R$ 0,00</strong>. O JSON ainda é gerado, mas na prática a coluna do ano anterior
-    ficará zerada — isso é correto.</p>
 
     <div class="disclaimer">
       <strong>Privacidade:</strong> o arquivo JSON contém valores das suas posições e pode
@@ -397,18 +263,7 @@ def generate_html(report: IrpfReport) -> str:
         else "Valores anteriores não encontrados — use --prior-statement ou --prior-year-json."
     )
 
-    is_partial_year = report.valuation_date != date(report.year, 12, 31)
-    partial_year_note = (
-        f"<div class=\"guide-note\"><strong>Período parcial:</strong> este extrato cobre até "
-        f"{report.valuation_date.strftime('%d/%m/%Y')}, não o ano completo. Os valores são "
-        f"<strong>provisórios</strong> — para o IRPF final, exporte novamente com período de "
-        f"1º de janeiro a 31 de dezembro de {report.year}.</div>"
-        if is_partial_year
-        else ""
-    )
-
-    section_export = _section_export_guide(report, partial_year_note)
-    section_values = _section_values_guide(report, prior_help, is_partial_year)
+    situation_notes = _section_situation_notes(report)
     section_obligations = _section_obligations_guide(report, cbe, cbe_status, cbe_reason)
     section_json = _section_json_guide(report)
 
@@ -418,138 +273,29 @@ def generate_html(report: IrpfReport) -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>IRPF {report.year} — Guia IBKR</title>
-  <style>
-    :root {{
-      --bg: #f4f6f9;
-      --card: #ffffff;
-      --text: #1a2332;
-      --muted: #5c6578;
-      --accent: #2563eb;
-      --accent-hover: #1d4ed8;
-      --border: #e2e8f0;
-      --warn: #b45309;
-      --warn-bg: #fef3c7;
-      --ok: #15803d;
-      --ok-bg: #dcfce7;
-    }}
-    * {{ box-sizing: border-box; }}
-    body {{
-      margin: 0;
-      font-family: "Segoe UI", system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-    }}
-    main {{ max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }}
-    h1, h2, h3 {{ line-height: 1.2; }}
-    h1 {{ font-size: 1.9rem; margin-bottom: 0.25rem; }}
-    .subtitle {{ color: var(--muted); margin-bottom: 2rem; }}
-    section {{
-      background: var(--card);
-      border-radius: 12px;
-      padding: 1.25rem 1.5rem;
-      margin-bottom: 1.25rem;
-      border: 1px solid var(--border);
-      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
-    }}
-    table {{ width: 100%; border-collapse: collapse; font-size: 0.92rem; }}
-    th, td {{ padding: 0.55rem 0.45rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }}
-    th {{ color: var(--muted); font-weight: 600; }}
-    ol, ul {{ padding-left: 1.25rem; }}
-    .disclaimer {{ border-left: 4px solid var(--warn); padding-left: 1rem; color: var(--muted); background: var(--warn-bg); border-radius: 0 8px 8px 0; padding: 0.75rem 1rem; }}
-    .badge {{ display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.85rem; }}
-    .badge.warn {{ background: var(--warn-bg); color: var(--warn); }}
-    .badge.ok {{ background: var(--ok-bg); color: var(--ok); }}
-    button.copy {{
-      background: #f1f5f9;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 0.2rem 0.55rem;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }}
-    button.copy:hover {{ background: var(--accent); border-color: var(--accent); color: #fff; }}
-    code {{ background: #f1f5f9; padding: 0.1rem 0.35rem; border-radius: 4px; border: 1px solid var(--border); font-size: 0.9em; }}
-    .guide-note {{
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      border-radius: 8px;
-      padding: 0.85rem 1rem;
-      margin: 1rem 0;
-      color: #1e3a5f;
-    }}
-    .guide-note strong {{ color: #1e40af; }}
-    h4 {{ margin: 1.25rem 0 0.5rem; font-size: 1rem; color: var(--text); }}
-    h4:first-child {{ margin-top: 0; }}
-    .term-list {{ margin: 0.5rem 0 1rem; }}
-    .term-list dt {{
-      font-weight: 600;
-      margin-top: 0.65rem;
-      color: var(--text);
-    }}
-    .term-list dt:first-child {{ margin-top: 0; }}
-    .term-list dd {{
-      margin: 0.2rem 0 0 0;
-      color: var(--muted);
-      padding-left: 0;
-    }}
-    .steps {{ margin: 0.75rem 0; padding-left: 0; list-style: none; }}
-    .steps li {{
-      position: relative;
-      padding: 0.65rem 0 0.65rem 2.5rem;
-      border-bottom: 1px solid var(--border);
-    }}
-    .steps li:last-child {{ border-bottom: none; }}
-    .steps li::before {{
-      content: attr(data-step);
-      position: absolute;
-      left: 0;
-      top: 0.65rem;
-      width: 1.75rem;
-      height: 1.75rem;
-      background: var(--accent);
-      color: #fff;
-      border-radius: 50%;
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-align: center;
-      line-height: 1.75rem;
-    }}
-    .obligation-card {{
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1rem 1.15rem;
-      margin-bottom: 0.85rem;
-      background: #fafbfc;
-    }}
-    .obligation-card h4 {{ margin-top: 0; }}
-    .obligation-card p:last-child {{ margin-bottom: 0; }}
-    small {{ color: var(--muted); }}
-  </style>
+  <style>{REPORT_CSS}</style>
 </head>
 <body>
 <main>
   <h1>IRPF {report.year} — Guia a partir do Activity Statement IBKR</h1>
   <p class="subtitle">Data de valoração: {report.valuation_date.strftime('%d/%m/%Y')} · {prior_help}</p>
 
+  <div class="guide-link">
+    <strong>Primeira vez usando o programa?</strong> Leia o
+    <a href="{GUIDE_FILENAME}">guia de uso ({GUIDE_FILENAME})</a> — ele explica como exportar
+    o extrato da IBKR, rodar o programa e entender os termos. Este relatório contém apenas os
+    valores calculados a partir do seu extrato.
+  </div>
+
   <section class="disclaimer">
     <p><strong>Aviso:</strong> este relatório é apenas informativo e não constitui assessoria fiscal.
     Regras mudam; valores parciais do ano são provisórios. Confira tudo com um contador.</p>
   </section>
 
-  <section>
-    <h2>1. Como exportar o Activity Statement na IBKR</h2>
-    {section_export}
-  </section>
+  {situation_notes}
 
   <section>
-    <h2>2. Como obter os valores para o IRPF</h2>
-    {section_values}
-  </section>
-
-  <section>
-    <h2>3. Passo a passo IRPF</h2>
+    <h2>1. Passo a passo IRPF</h2>
     <h3>Bens e Direitos — Grupo 04 / Código 03</h3>
     <p>Declare ações no exterior e caixa em USD. Copie a discriminação de cada linha.</p>
     <table>
@@ -590,12 +336,12 @@ def generate_html(report: IrpfReport) -> str:
   </section>
 
   <section>
-    <h2>4. Tabelas de auditoria</h2>
+    <h2>2. Tabelas de auditoria</h2>
     {f'<ul>{validation}</ul>' if validation else '<p>Nenhuma divergência detectada.</p>'}
   </section>
 
   <section>
-    <h2>5. Ganho de capital — verificação mensal DARF (R$ 35.000)</h2>
+    <h2>3. Ganho de capital — verificação mensal DARF (R$ 35.000)</h2>
     <table>
       <thead><tr><th>Mês</th><th>Proventos de venda (BRL)</th><th>Precisa DARF?</th></tr></thead>
       <tbody>
@@ -605,12 +351,12 @@ def generate_html(report: IrpfReport) -> str:
   </section>
 
   <section>
-    <h2>6. Obrigações relacionadas: DARF, GCAP e CBE</h2>
+    <h2>4. Obrigações relacionadas: DARF, GCAP e CBE</h2>
     {section_obligations}
   </section>
 
   <section>
-    <h2>7. Guardar valores para o próximo ano (arquivo JSON)</h2>
+    <h2>5. Guardar valores para o próximo ano (arquivo JSON)</h2>
     {section_json}
   </section>
 </main>
@@ -630,6 +376,15 @@ document.querySelectorAll('button.copy').forEach((btn) => {{
 """
 
 
+def write_guide_copy(output_dir: Path) -> None:
+    source = guide_source_path()
+    if not source.exists():
+        return
+    output_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, output_dir / GUIDE_FILENAME)
+
+
 def write_report(report: IrpfReport, output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    write_guide_copy(output_path.parent)
     output_path.write_text(generate_html(report), encoding="utf-8")
