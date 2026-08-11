@@ -8,15 +8,49 @@ The report covers **Bens e Direitos**, **Rendimentos Isentos** (dividends), **ga
 
 [MIT](LICENSE) — permissive open source. You can use, modify, and distribute the code freely, including in commercial projects, as long as the license notice is preserved.
 
-## Requirements
+## Quick start (download — no Python)
 
-- **Python 3.10+**
-- Internet access on first run (to fetch [PTAX](https://www.bcb.gov.br/estabilidadefinanceira/historicocotacoes) from the Brazilian Central Bank; results are cached locally)
+If you only want to generate your IRPF guide and do not want to install Python:
 
-## Installation
+1. Open **[Releases](https://github.com/joaovictornsv/ibkr-ir/releases)** and download the file for your system:
+   - **Windows:** `ibkr-ir-windows-x86_64` → rename to `ibkr-ir.exe` (optional)
+   - **macOS (Apple Silicon):** `ibkr-ir-macos-arm64`
+   - **Linux:** `ibkr-ir-linux-x86_64`
+2. Export your IBKR **Activity Statement** as CSV (see [Exporting the statement](#exporting-the-statement)).
+3. Open a terminal in the folder where you saved the file and run (adjust paths):
+
+**Windows (PowerShell or CMD)**
+
+```text
+ibkr-ir.exe --year 2025 --statement C:\Users\You\Downloads\activity_statement.csv
+```
+
+**macOS / Linux**
 
 ```bash
-git clone https://github.com/YOUR_USER/ibkr-ir.git
+chmod +x ibkr-ir-macos-arm64   # once, after download
+./ibkr-ir-macos-arm64 --year 2025 --statement ~/Downloads/activity_statement.csv
+```
+
+4. Open `output/irpf-2025.html` in your browser (created in the folder where you ran the command).
+
+**macOS:** the first run may show a security warning because the binary is not signed. Use **System Settings → Privacy & Security → Open Anyway**, or run `xattr -cr ./ibkr-ir-macos-arm64` once.
+
+**Internet:** required on first run to fetch [PTAX](https://www.bcb.gov.br/estabilidadefinanceira/historicocotacoes) rates; they are cached in `cache/ptax` next to where you run the program.
+
+## Quick start (from source)
+
+Developers and contributors can run from Python instead:
+
+### Requirements
+
+- **Python 3.10+**
+- Internet access on first run (PTAX; cached locally)
+
+### Installation
+
+```bash
+git clone https://github.com/joaovictornsv/ibkr-ir.git
 cd ibkr-ir
 
 python3 -m venv .venv
@@ -25,10 +59,8 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Quick start
-
 1. Export your IBKR **Activity Statement** as CSV (see [Exporting the statement](#exporting-the-statement)).
-2. Run the generator (replace paths and year with yours):
+2. Run:
 
 ```bash
 python generate.py \
@@ -36,7 +68,7 @@ python generate.py \
   --statement /path/to/your/activity_statement.csv
 ```
 
-3. Open `output/irpf-2025.html` in your browser and copy values into the Receita Federal IRPF program.
+3. Open `output/irpf-2025.html` in your browser.
 
 ### Try with the sample file (no real data)
 
@@ -148,6 +180,21 @@ PYTHONPATH=. pytest tests/ -v
 ```
 
 See [docs/PLAN.md](docs/PLAN.md) for architecture and design constraints.
+
+### Building binaries (maintainers)
+
+```bash
+./scripts/build-binary.sh
+```
+
+To publish downloads for all platforms, tag a release (GitHub Actions builds Windows, macOS, and Linux):
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+Artifacts appear under **Releases** on GitHub. Binaries are not committed to the repo (too large; platform-specific).
 
 ## Disclaimer
 
