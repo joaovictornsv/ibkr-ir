@@ -1,0 +1,19 @@
+# Generated at runtime — may contain user account data
+output/
+cache/
+
+# User Activity Statements — never commit real exports
+*.csv
+!examples/**
+!tests/fixtures/**
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,25 @@
+Statement,Header,Field Name,Field Value
+Statement,Data,Title,Activity Statement
+Statement,Data,Period,"January 1, 2025 - December 31, 2025"
+Statement,Data,Base Currency,USD
+Net Asset Value,Header,Asset Class,Prior Total,Current Long,Current Short,Current Total,Change
+Net Asset Value,Data,Total,0,2000,0,2000,2000
+Change in NAV,Header,Field Name,Field Value
+Change in NAV,Data,Starting Value,0
+Change in NAV,Data,Ending Value,2000
+Change in NAV,Data,Change,2000
+Open Positions,Header,DataDiscriminator,Asset Category,Currency,Symbol,Quantity,Mult,Cost Price,Cost Basis,Close Price,Value,Unrealized P/L,Code
+Open Positions,Data,Summary,Stocks,USD,AAPL,10,1,140,1400,150,1500,100,
+Cash Report,Header,CurrencySummary,Currency,Total,Securities,Commodities,IB-UKL,IB-CFD,IB-DE,IB-IE,IB-US,IB-IT,IB-Forex,IB-Other,IB-Total
+Cash Report,Data,Base Currency Summary,USD,500,0,0,0,0,0,0,0,0,0,0,500
+Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Exchange,Quantity,T. Price,C. Price,Proceeds,Comm/Fee,Basis,Realized P/L,MTM P/L,Code
+Trades,Data,Order,Stocks,USD,AAPL,"2025-06-15, 10:00:00",-,5,160,150,800,-1,700,99,0,C
+Trades,Data,Order,Stocks,USD,AAPL,"2025-03-10, 09:30:00",-,10,140,150,-1400,-1,0,0,0,O
+Dividends,Header,Currency,Date,Description,Amount
+Dividends,Data,USD,2025-03-20,AAPL(US0378331005) Cash Dividend USD 0.25 per Share,2.50
+Withholding Tax,Header,Currency,Date,Description,Amount
+Withholding Tax,Data,USD,2025-03-20,AAPL(US0378331005) Cash Dividend USD 0.25 per Share - US Tax,-0.38
+Deposits & Withdrawals,Header,Currency,Settle Date,Description,Amount
+Deposits & Withdrawals,Data,USD,2025-01-05,Electronic Fund Transfer,5000
+Financial Instrument Information,Header,Asset Category,Symbol,Description,Security ID,Listing Exchange
+Financial Instrument Information,Data,Stocks,AAPL,APPLE INC,US0378331005,NASDAQ
