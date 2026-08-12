@@ -4,6 +4,27 @@ Generate an HTML guide to help Brazilian residents fill **IRPF** fields from an 
 
 The report covers **Bens e Direitos**, **Rendimentos Isentos** (dividends), **ganho de capital** (average-cost method in BRL), and informative checks for **DARF**, **GCAP**, and **CBE**. It is **not tax advice** — always review with a qualified accountant.
 
+## Summary
+
+- [License](#license)
+- [Recommended folder (especially for non-developers)](#recommended-folder-especially-for-non-developers)
+- [Quick start (download — no Python)](#quick-start-download--no-python)
+- [Quick start (from source)](#quick-start-from-source)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+  - [Try with the sample file (no real data)](#try-with-the-sample-file-no-real-data)
+- [Exporting the statement](#exporting-the-statement)
+- [Usage](#usage)
+  - [Basic command](#basic-command)
+  - [Annual workflow](#annual-workflow)
+  - [Optional: prior-year values without JSON](#optional-prior-year-values-without-json)
+- [Output](#output)
+- [What the report includes](#what-the-report-includes)
+- [Privacy](#privacy)
+- [Development](#development)
+  - [Building binaries (maintainers)](#building-binaries-maintainers)
+- [Disclaimer](#disclaimer)
+
 ## License
 
 [MIT](LICENSE) — permissive open source. You can use, modify, and distribute the code freely, including in commercial projects, as long as the license notice is preserved.
