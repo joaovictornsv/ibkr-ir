@@ -229,8 +229,6 @@ pip install -r requirements.txt pytest
 PYTHONPATH=. pytest tests/ -v
 ```
 
-See [docs/PLAN.md](docs/PLAN.md) for architecture and design constraints.
-
 ### Building binaries (maintainers)
 
 ```bash
