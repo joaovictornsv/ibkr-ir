@@ -8,36 +8,64 @@ The report covers **Bens e Direitos**, **Rendimentos Isentos** (dividends), **ga
 
 [MIT](LICENSE) — permissive open source. You can use, modify, and distribute the code freely, including in commercial projects, as long as the license notice is preserved.
 
+## Recommended folder (especially for non-developers)
+
+Create a **dedicated folder** for this project and keep everything related to your IRPF filing there — not mixed with Downloads or other files.
+
+**Put in that folder:**
+
+- The downloaded **program** (`ibkr-ir.exe` on Windows, or `ibkr-ir-macos-arm64` / `ibkr-ir-linux-x86_64`)
+- Your IBKR **Activity Statement** CSV exports
+- The generated **reports** and **cache** (created automatically when you run the program)
+
+**Why?** When you run the program, it creates an `output/` folder (HTML report + JSON for next year) and a `cache/` folder (PTAX exchange rates) **in the folder where you run the command**. Keeping the binary, CSVs, output, and cache in one place makes it easier to find your files year after year and avoids clutter elsewhere.
+
+**Example layout** (after your first run):
+
+```text
+ibkr-ir/                          ← your dedicated folder
+├── ibkr-ir-macos-arm64           ← program (or ibkr-ir.exe on Windows)
+├── statement_2025.csv            ← IBKR export
+├── output/
+│   ├── irpf-2025.html            ← your IRPF guide (open in browser)
+│   ├── irpf-2025.json            ← saved for next year's prior values
+│   └── guia-ibkr-ir.html         ← usage guide (copied here on first run)
+└── cache/
+    └── ptax/                     ← cached PTAX rates (reused on later runs)
+```
+
+**Tip:** Open the terminal *inside* this folder before running the program (see [Quick start](#quick-start-download--no-python) below).
+
 ## Quick start (download — no Python)
 
 If you only want to generate your IRPF guide and do not want to install Python:
 
-1. Open **[Releases](https://github.com/joaovictornsv/ibkr-ir/releases)** and download the file for your system:
+1. Create your dedicated folder (see [Recommended folder](#recommended-folder-especially-for-non-developers)) and download the program into it from **[Releases](https://github.com/joaovictornsv/ibkr-ir/releases)**:
    - **Windows:** `ibkr-ir-windows-x86_64` → rename to `ibkr-ir.exe` (optional)
    - **macOS (Apple Silicon):** `ibkr-ir-macos-arm64`
    - **Linux:** `ibkr-ir-linux-x86_64`
-2. **Read the usage guide first:** open [`docs/guia-ibkr-ir.html`](docs/guia-ibkr-ir.html) in your browser (also in the repo and copied to `output/` when you run the program).
-3. Export your IBKR **Activity Statement** as CSV (see [Exporting the statement](#exporting-the-statement)).
-4. Open a terminal in the folder where you saved the file and run (adjust paths):
+2. **Read the usage guide first:** open [`docs/guia-ibkr-ir.html`](docs/guia-ibkr-ir.html) in your browser (also copied to `output/` in your project folder on first run).
+3. Export your IBKR **Activity Statement** as CSV and save it in the same folder (see [Exporting the statement](#exporting-the-statement)).
+4. Open a terminal **in your project folder** and run (adjust the CSV name if needed):
 
 **Windows (PowerShell or CMD)**
 
 ```text
-ibkr-ir.exe --year 2025 --statement C:\Users\You\Downloads\activity_statement.csv
+ibkr-ir.exe --year 2025 --statement statement_2025.csv
 ```
 
 **macOS / Linux**
 
 ```bash
 chmod +x ibkr-ir-macos-arm64   # once, after download
-./ibkr-ir-macos-arm64 --year 2025 --statement ~/Downloads/activity_statement.csv
+./ibkr-ir-macos-arm64 --year 2025 --statement statement_2025.csv
 ```
 
-4. Open `output/irpf-2025.html` in your browser (created in the folder where you ran the command).
+5. Open `output/irpf-2025.html` in your browser (inside your project folder).
 
 **macOS:** the first run may show a security warning because the binary is not signed. Use **System Settings → Privacy & Security → Open Anyway**, or run `xattr -cr ./ibkr-ir-macos-arm64` once.
 
-**Internet:** required on first run to fetch [PTAX](https://www.bcb.gov.br/estabilidadefinanceira/historicocotacoes) rates; they are cached in `cache/ptax` next to where you run the program.
+**Internet:** required on first run to fetch [PTAX](https://www.bcb.gov.br/estabilidadefinanceira/historicocotacoes) rates; they are cached in `cache/ptax` inside your project folder.
 
 ## Quick start (from source)
 
