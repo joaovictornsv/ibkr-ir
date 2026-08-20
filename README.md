@@ -1,249 +1,104 @@
-# ibkr-ir
+# IBKR para IRPF
 
-Generate an HTML guide to help Brazilian residents fill **IRPF** fields from an Interactive Brokers **Activity Statement** (CSV).
+Programa gratuito que lê o **Activity Statement** (extrato de atividades) da **Interactive Brokers** e gera um relatório HTML com os valores para a declaração do **IRPF** — Bens e Direitos, dividendos, ganho de capital e avisos sobre DARF, GCAP e CBE.
 
-The report covers **Bens e Direitos**, **Rendimentos Isentos** (dividends), **ganho de capital** (average-cost method in BRL), and informative checks for **DARF**, **GCAP**, and **CBE**. It is **not tax advice** — always review with a qualified accountant.
+> Ferramenta não oficial. Não tem ligação com a Interactive Brokers. **Não é assessoria fiscal** — confira tudo com um contador antes de enviar a declaração.
 
-## Summary
+---
 
-- [License](#license)
-- [Recommended folder (especially for non-developers)](#recommended-folder-especially-for-non-developers)
-- [Quick start (download — no Python)](#quick-start-download--no-python)
-- [Quick start (from source)](#quick-start-from-source)
-  - [Requirements](#requirements)
-  - [Installation](#installation)
-  - [Try with the sample file (no real data)](#try-with-the-sample-file-no-real-data)
-- [Exporting the statement](#exporting-the-statement)
-- [Usage](#usage)
-  - [Basic command](#basic-command)
-  - [Annual workflow](#annual-workflow)
-  - [Optional: prior-year values without JSON](#optional-prior-year-values-without-json)
-- [Output](#output)
-- [What the report includes](#what-the-report-includes)
-- [Privacy](#privacy)
-- [Development](#development)
-  - [Building binaries (maintainers)](#building-binaries-maintainers)
-- [Disclaimer](#disclaimer)
+## Privacidade
 
-## License
+- Roda **100% no seu computador**
+- **Não** envia seu extrato da IBKR para nenhum servidor
+- Na primeira execução, busca taxas **PTAX** no site do Banco Central (e guarda em `cache/` no seu computador)
+- **Não** compartilhe seu extrato CSV, a pasta `output/` nem o `cache/` publicamente
 
-[MIT](LICENSE) — permissive open source. You can use, modify, and distribute the code freely, including in commercial projects, as long as the license notice is preserved.
+---
 
-## Recommended folder (especially for non-developers)
+## O que faz
 
-Create a **dedicated folder** for this project and keep everything related to your IRPF filing there — not mixed with Downloads or other files.
+- Lê o extrato **Activity Statement** exportado da IBKR em **CSV**
+- Calcula valores em reais (com PTAX) para copiar no IRPF
+- Gera **`output/irpf-AAAA.html`** — abra no navegador e use os botões de copiar
+- Salva **`output/irpf-AAAA.json`** para facilitar a declaração do ano seguinte
 
-**Put in that folder:**
+O relatório inclui, entre outros:
 
-- The downloaded **program** (`ibkr-ir.exe` on Windows, or `ibkr-ir-macos-arm64` / `ibkr-ir-linux-x86_64`)
-- Your IBKR **Activity Statement** CSV exports
-- The generated **reports** and **cache** (created automatically when you run the program)
+- **Bens e Direitos** (ações no exterior + saldo em dólar)
+- **Rendimentos Isentos** (dividendos)
+- **Ganho de capital** (método de custo médio em reais)
+- Avisos informativos sobre **DARF**, **GCAP** e **CBE**
 
-**Why?** When you run the program, it creates an `output/` folder (HTML report + JSON for next year) and a `cache/` folder (PTAX exchange rates) **in the folder where you run the command**. Keeping the binary, CSVs, output, and cache in one place makes it easier to find your files year after year and avoids clutter elsewhere.
+---
 
-**Example layout** (after your first run):
+## Como usar (depois de baixar)
 
-```text
-ibkr-ir/                          ← your dedicated folder
-├── ibkr-ir-macos-arm64           ← program (or ibkr-ir.exe on Windows)
-├── statement_2025.csv            ← IBKR export
-├── output/
-│   ├── irpf-2025.html            ← your IRPF guide (open in browser)
-│   ├── irpf-2025.json            ← saved for next year's prior values
-│   └── guia-ibkr-ir.html         ← usage guide (copied here on first run)
-└── cache/
-    └── ptax/                     ← cached PTAX rates (reused on later runs)
-```
+1. Exporte o **Activity Statement** da IBKR em **CSV** (não use o arquivo "Transactions") — passo a passo em [`docs/guia-ibkr-ir.html`](docs/guia-ibkr-ir.html) (também copiado para sua pasta na primeira execução)
+2. Coloque o **programa** e o **extrato CSV** na **mesma pasta**
+3. Abra o terminal **dentro dessa pasta** e rode (ajuste o ano e o nome do arquivo):
 
-**Tip:** Open the terminal *inside* this folder before running the program (see [Quick start](#quick-start-download--no-python) below).
-
-## Quick start (download — no Python)
-
-If you only want to generate your IRPF guide and do not want to install Python:
-
-1. Create your dedicated folder (see [Recommended folder](#recommended-folder-especially-for-non-developers)) and download the program into it from **[Releases](https://github.com/joaovictornsv/ibkr-ir/releases)**:
-   - **Windows:** `ibkr-ir-windows-x86_64` → rename to `ibkr-ir.exe` (optional)
-   - **macOS (Apple Silicon):** `ibkr-ir-macos-arm64`
-   - **Linux:** `ibkr-ir-linux-x86_64`
-2. **Read the usage guide first:** open [`docs/guia-ibkr-ir.html`](docs/guia-ibkr-ir.html) in your browser (also copied to `output/` in your project folder on first run).
-3. Export your IBKR **Activity Statement** as CSV and save it in the same folder (see [Exporting the statement](#exporting-the-statement)).
-4. Open a terminal **in your project folder** and run (adjust the CSV name if needed):
-
-**Windows (PowerShell or CMD)**
+**Windows**
 
 ```text
 ibkr-ir.exe --year 2025 --statement statement_2025.csv
 ```
 
-**macOS / Linux**
+**Mac / Linux**
 
 ```bash
-chmod +x ibkr-ir-macos-arm64   # once, after download
+chmod +x ibkr-ir-macos-arm64   # uma vez, após o download
 ./ibkr-ir-macos-arm64 --year 2025 --statement statement_2025.csv
 ```
 
-5. Open `output/irpf-2025.html` in your browser (inside your project folder).
+4. Abra **`output/irpf-2025.html`** no navegador (Chrome, Firefox, Edge, Safari)
+5. Copie os valores para o programa da Receita Federal
 
-**macOS:** the first run may show a security warning because the binary is not signed. Use **System Settings → Privacy & Security → Open Anyway**, or run `xattr -cr ./ibkr-ir-macos-arm64` once.
+**Dica:** crie uma **pasta fixa** só para o IRPF (programa + extratos + relatórios). Exemplo:
 
-**Internet:** required on first run to fetch [PTAX](https://www.bcb.gov.br/estabilidadefinanceira/historicocotacoes) rates; they are cached in `cache/ptax` inside your project folder.
-
-## Quick start (from source)
-
-Developers and contributors can run from Python instead:
-
-### Requirements
-
-- **Python 3.10+**
-- Internet access on first run (PTAX; cached locally)
-
-### Installation
-
-```bash
-git clone https://github.com/joaovictornsv/ibkr-ir.git
-cd ibkr-ir
-
-python3 -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-
-pip install -r requirements.txt
+```text
+ibkr-ir/
+├── ibkr-ir-macos-arm64      ← programa (ou ibkr-ir.exe no Windows)
+├── statement_2025.csv       ← extrato da IBKR
+├── output/
+│   └── irpf-2025.html       ← seu guia (abra no navegador)
+└── cache/
+    └── ptax/                ← taxas PTAX (criado automaticamente)
 ```
 
-1. Export your IBKR **Activity Statement** as CSV (see [Exporting the statement](#exporting-the-statement)).
-2. Run:
+---
 
-```bash
-python generate.py \
-  --year 2025 \
-  --statement /path/to/your/activity_statement.csv
-```
+## Como baixar o programa
 
-3. Open `output/irpf-2025.html` in your browser.
+1. Abra a página de **[Releases](https://github.com/joaovictornsv/ibkr-ir/releases)**
+2. Baixe o arquivo do **seu sistema** — **não** baixe "Source code":
+   - **Windows:** `ibkr-ir-windows-x86_64` (pode renomear para `ibkr-ir.exe`)
+   - **Mac (Apple Silicon):** `ibkr-ir-macos-arm64`
+   - **Linux:** `ibkr-ir-linux-x86_64`
+3. Coloque numa **pasta fixa** (ex.: `Documentos/ibkr-ir/`)
+4. **Leia o guia antes da primeira execução:** abra [`docs/guia-ibkr-ir.html`](docs/guia-ibkr-ir.html) no navegador
 
-### Try with the sample file (no real data)
+![Baixar o programa na página Releases](docs/images/01-download-release.png)
 
-```bash
-python generate.py \
-  --year 2025 \
-  --statement examples/sample_statement.csv
-```
+**Mac:** na primeira execução pode aparecer aviso de segurança. Use **Ajustes do Sistema → Privacidade e Segurança → Abrir assim mesmo**, ou rode `xattr -cr ./ibkr-ir-macos-arm64` uma vez.
 
-## Exporting the statement
+**Internet:** necessária na **primeira execução** para buscar as taxas PTAX; depois ficam salvas em `cache/ptax`.
 
-Use the IBKR **Activity Statement** — not the Transactions export.
+---
 
-1. Log in to **Client Portal** → **Performance & Reports** → **Statements** → **Activity**
-2. Select your account
-3. **Period:** January 1 – December 31 of the target year
-4. **Format:** CSV (not PDF)
-5. Download the file
+## Problemas comuns
 
-Detailed step-by-step instructions (in Portuguese) are in [`docs/guia-ibkr-ir.html`](docs/guia-ibkr-ir.html) — read that before your first run.
+| Problema | O que fazer |
+| -------- | ----------- |
+| Erro ao ler o CSV | Confira se exportou o **Activity Statement** (não "Transactions") em **CSV** (não PDF). Veja [`docs/guia-ibkr-ir.html`](docs/guia-ibkr-ir.html). |
+| Arquivo não encontrado | Abra o terminal **dentro da pasta** onde estão o programa e o extrato. |
+| Valores provisórios | Se exportou antes de 31/12, reexporte em janeiro com o ano completo (1º jan – 31 dez). |
+| Mac bloqueia o programa | **Privacidade e Segurança → Abrir assim mesmo**, ou `xattr -cr ./ibkr-ir-macos-arm64`. |
+| Sem internet na 1ª vez | O programa precisa baixar PTAX do BCB na primeira execução. |
 
-## Usage
+Algo não funcionou? Abra uma [issue no GitHub](https://github.com/joaovictornsv/ibkr-ir/issues) ou escreva para [hi@joaovictornsv.dev](mailto:hi@joaovictornsv.dev).
 
-### Basic command
+---
 
-```bash
-python generate.py --year YEAR --statement PATH_TO_CSV
-```
+## Para desenvolvedores
 
-| Argument | Required | Description |
-|---|---|---|
-| `--year` | Yes | Tax year (e.g. `2025`) |
-| `--statement` | Yes | Path to your Activity Statement CSV |
-| `--output` | No | HTML output path (default: `output/irpf-{year}.html`) |
-| `--prior-statement` | No | Prior-year Activity Statement for 31/12 prior values |
-| `--prior-year-json` | No | JSON from a previous run (default: `output/irpf-{year-1}.json`) |
-| `--ptax-cache` | No | PTAX cache directory (default: `cache/ptax`) |
-
-### Annual workflow
-
-**First year on IBKR**
-
-```bash
-python generate.py --year 2025 --statement ~/Downloads/statement_2025.csv
-```
-
-Prior-year values in Bens e Direitos are set to R$ 0 when the statement shows `Prior Total = 0` in Net Asset Value.
-
-**Following years**
-
-Run again for the new year. If `output/irpf-2024.json` exists from last year's run, prior values are loaded automatically:
-
-```bash
-python generate.py --year 2025 --statement ~/Downloads/statement_2025.csv
-```
-
-**Preview during the year**
-
-You can export and run anytime with a partial period (e.g. Jan 1 – today). Values are provisional — re-export with the full calendar year before filing.
-
-**Final IRPF filing**
-
-In January, export the statement for the complete year (Jan 1 – Dec 31) and run again:
-
-```bash
-python generate.py --year 2025 --statement ~/Downloads/statement_2025_final.csv
-```
-
-### Optional: prior-year values without JSON
-
-If you do not have last year's JSON sidecar:
-
-```bash
-python generate.py \
-  --year 2025 \
-  --statement ~/Downloads/statement_2025.csv \
-  --prior-statement ~/Downloads/statement_2024.csv
-```
-
-## Output
-
-| File | Description |
-|---|---|
-| `output/irpf-{year}.html` | Step-by-step IRPF guide with copy buttons (Portuguese) |
-| `output/irpf-{year}.json` | BRL position values for next year's prior-value carry-forward |
-
-Both paths are **gitignored** by default — they may contain personal data.
-
-## What the report includes
-
-- **Bens e Direitos** (Grupo 04 / Código 03) — stocks abroad + USD cash
-- **Rendimentos Isentos** (Código 05) — foreign dividends × PTAX
-- **Ganho de capital** — average cost in BRL, per sale
-- **DARF check** — monthly R$ 35,000 sale-proceeds threshold
-- **CBE check** — USD 100k NAV / remittance threshold (informative)
-- Export guide and glossary for non-experts (see `docs/guia-ibkr-ir.html`)
-
-## Privacy
-
-- **Never commit** your Activity Statement CSV, `output/`, or `cache/` — they contain account and portfolio data.
-- This repository is generic: no real account numbers, names, or user-specific assumptions in versioned files.
-- The tool runs **locally**; your statement is not uploaded anywhere (except PTAX rates fetched from BCB).
-
-## Development
-
-```bash
-pip install -r requirements.txt pytest
-PYTHONPATH=. pytest tests/ -v
-```
-
-### Building binaries (maintainers)
-
-```bash
-./scripts/build-binary.sh
-```
-
-To publish downloads for all platforms, tag a release (GitHub Actions builds Windows, macOS, and Linux):
-
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-Artifacts appear under **Releases** on GitHub. Binaries are not committed to the repo (too large; platform-specific).
-
-## Disclaimer
-
-This software is provided for informational purposes only. Tax rules change, individual situations vary, and partial-year values are provisional. The authors are not responsible for filing errors. Consult a qualified tax professional before submitting your IRPF or related obligations (DARF, GCAP, CBE).
+Detalhes técnicos, código-fonte, testes e publicação de versões: **[TECH_README.md](TECH_README.md)**
